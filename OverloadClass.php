@@ -187,7 +187,9 @@ class OverloadClass
                 } elseif ($token[0] === T_EXTENDS) {
                     static::addUse(static::getClassNameFromTokens($tokens, $index + 1), $namespaceFound, $uses, $addUses);
                 } elseif ($isGlobalUse && $token[0] === T_USE) {
-                    $uses[] = static::getClassNameFromTokens($tokens, $index + 1);
+                    if ($tokens[$index + 2][1] !== 'function') {
+                        $uses[] = static::getClassNameFromTokens($tokens, $index + 1);
+                    }
                     $lastUseLine = $token[2];
                 }
 
