@@ -144,10 +144,10 @@ class OverloadClass
 
         $io->write(
             'Generate proxy for <info>'
-                . $fullyQualifiedClassName
-                . '</info> in <comment>'
-                . $overloadedFilePath
-                . '</comment>',
+            . $fullyQualifiedClassName
+            . '</info> in <comment>'
+            . $overloadedFilePath
+            . '</comment>',
             true,
             IOInterface::VERBOSE
         );
@@ -175,27 +175,27 @@ class OverloadClass
         $addUses = [];
         $isGlobalUse = true;
         $lastUseLine = null;
-        $tokens = token_get_all(implode(null, $phpLines));
+        $tokens = token_get_all(implode('', $phpLines));
         foreach ($tokens as $index => $token) {
             if (is_array($token)) {
                 if ($token[0] === T_NAMESPACE) {
                     $nextIsNamespace = true;
                     $namespaceLine = $token[2];
                 } elseif ($isGlobalUse && $token[0] === T_CLASS) {
-                    $classesFound[] = static::getClassNameFromTokens($tokens, $index + 1);
+                    $classesFound[] = static::getClassNameFromTokens($tokens, $index + 2);
                     $isGlobalUse = false;
                 } elseif ($token[0] === T_EXTENDS) {
-                    static::addUse(static::getClassNameFromTokens($tokens, $index + 1), $namespaceFound, $uses, $addUses);
+                    static::addUse(static::getClassNameFromTokens($tokens, $index + 2), $namespaceFound, $uses, $addUses);
                 } elseif ($isGlobalUse && $token[0] === T_USE) {
                     if ($tokens[$index + 2][1] !== 'function') {
-                        $uses[] = static::getClassNameFromTokens($tokens, $index + 1);
+                        $uses[] = static::getClassNameFromTokens($tokens, $index + 2);
                     }
                     $lastUseLine = $token[2];
                 }
 
                 if ($nextIsNamespace) {
                     $phpCodeForNamespace .= $token[1];
-                    if ($token[0] === T_NS_SEPARATOR || $token[0] === T_STRING) {
+                    if ($token[0] === T_NAME_QUALIFIED) {
                         $namespaceFound .= $token[1];
                     }
                 }
@@ -214,7 +214,7 @@ class OverloadClass
         static::replaceNamespace($namespaceFound, $phpCodeForNamespace, $phpLines, $namespaceLine);
         static::addUsesInPhpLines($addUses, $phpLines, ($lastUseLine === null ? $namespaceLine : $lastUseLine));
 
-        return implode(null, $phpLines);
+        return implode('', $phpLines);
     }
 
     /**
@@ -255,12 +255,14 @@ class OverloadClass
     protected static function getClassNameFromTokens(array &$tokens, $index)
     {
         $return = null;
+
         do {
             if (
                 is_array($tokens[$index])
                 && (
                     $tokens[$index][0] === T_STRING
                     || $tokens[$index][0] === T_NS_SEPARATOR
+                    || $tokens[$index][0] === T_NAME_QUALIFIED
                 )
             ) {
                 $return .= $tokens[$index][1];
